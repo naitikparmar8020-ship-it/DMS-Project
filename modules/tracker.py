@@ -1,0 +1,135 @@
+import cv2
+import numpy as np
+import pygame
+import config
+
+
+class DrowsinessTracker:
+    """
+     Module: State Logic, Temporal Tracking, and Audio Alerts.
+    
+    Tracks consecutive frames for low Eye Aspect Ratio (EAR) and high Mouth 
+    Aspect Ratio (MAR) to detect drowsiness and yawning in real-time.
+    """
+
+    def __init__(self):
+        # 1. Temporal Frame Counters (persist state across video frames)
+        self.eye_counter = 0
+        self.mouth_counter = 0
+
+        # 2. State Flags
+        self.drowsy_alert = False
+        self.yawn_alert = False
+
+        # 3. Audio Alarm Initialization
+        pygame.mixer.init()
+        try:
+            self.alarm_sound = pygame.mixer.Sound(config.ALARM_PATH)
+        except Exception as e:
+            print(f"[ERROR] Could not load alarm sound file from {config.ALARM_PATH}: {e}")
+            self.alarm_sound = None
+
+        self.alarm_playing = False
+
+    def _play_alarm(self):
+        """Helper method to start looping the audio alarm in a background thread."""
+        if self.alarm_sound and not self.alarm_playing:
+            self.alarm_playing = True
+            self.alarm_sound.play(-1)  # -1 loops the sound indefinitely
+
+    def _stop_alarm(self):
+        """Helper method to stop the audio alarm if active."""
+        if self.alarm_sound and self.alarm_playing:
+            self.alarm_sound.stop()
+            self.alarm_playing = False
+
+    def update(self, ear, mar):
+        """
+        Updates frame counters based on incoming EAR and MAR values, determines 
+        system alerts, manages sound, and returns UI display outputs.
+
+        Parameters:
+            ear (float or None): Eye Aspect Ratio calculated by Partner A.
+            mar (float or None): Mouth Aspect Ratio calculated by Partner A.
+
+        Returns:
+            status_text (str): Message to display on screen.
+            status_color (tuple BGR): OpenCV color code (Blue, Green, Red).
+        """
+        # Default State: Safe / Alert
+        status_text = "Status: Safe"
+        status_color = config.COLOR_GREEN
+
+        # -------------------------------------------------------------
+        # 1. EYE ASPECT RATIO (DROWSINESS) LOGIC
+        # -------------------------------------------------------------
+        if ear is not None and ear < config.EAR_THRESHOLD:
+            self.eye_counter += 1
+            if self.eye_counter >= config.EAR_CONSEC_FRAMES:
+                self.drowsy_alert = True
+        else:
+            self.eye_counter = 0
+            self.drowsy_alert = False
+
+        # -------------------------------------------------------------
+        # 2. MOUTH ASPECT RATIO (YAWNING) LOGIC
+        # -------------------------------------------------------------
+        if mar is not None and mar > config.MAR_THRESHOLD:
+            self.mouth_counter += 1
+            if self.mouth_counter >= config.MAR_CONSEC_FRAMES:
+                self.yawn_alert = True
+        else:
+            self.mouth_counter = 0
+            self.yawn_alert = False
+
+        # -------------------------------------------------------------
+        # 3. PRIORITY STATE RESOLUTION & ALERTS
+        # -------------------------------------------------------------
+        if self.drowsy_alert:
+            status_text = "WARNING: DROWSY!"
+            status_color = config.COLOR_RED
+
+            self._play_alarm()
+
+        elif self.yawn_alert:
+            status_text = "WARNING: YAWNING DETECTED!"
+
+            status_color = config.COLOR_YELLOW
+            self._stop_alarm()
+
+        else:
+
+            self._stop_alarm()
+
+        return status_text, status_color
+
+    def draw_ui(self, frame, ear, mar, status_text, status_color, left_eye_pts=None, right_eye_pts=None, mouth_pts=None):
+        """"
+        Task 2 Implementation: Renders HUD elements, metrics, dynamic status,
+        and facial landmark countours directly on the openCV frame.
+        """ 
+        # --- A. DRAW FACIAL OUTLINES ('cv2.polylines') ---
+        # Draw green outlines around eyes and mouth if coordinates are passed by Partner A
+        if left_eye_pts is not None and len(left_eye_pts) > 0:
+            cv2.polylines(frame, [np.array(left_eye_pts, dtype=np.int32)], isClosed=True, color=(0, 255, 0), thickness=1)
+
+        if right_eye_pts is not None and len(right_eye_pts) >0:
+             cv2.polylines(frame, [np.array(right_eye_pts, dtype=np.int32)], isClosed=True, color=(0, 255, 0), thickness=1)
+
+        if mouth_pts is not None and len(mouth_pts) > 0:
+            cv2.polylines(frame, [np.array(mouth_pts, dtype=np.int32)], isClosed=True, color=(0, 255, 0), thickness=1)
+
+        # --- B. DISPLAY REAL-TIME METRICS ('CV2.putText')
+        ear_str = f"EAR: {ear:.2f}" if ear is not None else "EAR: N/A"
+        mar_str = f"MAR: {mar:.2f}" if mar is not None else "MAR: N/A"
+
+        # Top-left telemetry readings
+        cv2.putText(frame, ear_str, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        cv2.putText(frame, mar_str, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2) 
+        
+        # --- C. DYNAMIC STATUS BANNER ---
+        # Draw dynamic text with dynamic background color at top-center of the screen
+        cv2.putText(frame, status_text, (20, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.9, status_color, 3)
+
+        return frame
+    
