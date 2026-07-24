@@ -1,6 +1,5 @@
 import cv2
 import mediapipe as mp
-
 from utils.calculations import calculate_mar, calculate_ear
 
 class FaceMeshDetector:
@@ -53,3 +52,4 @@ class FaceMeshDetector:
 
         # return metrics and landmarks locations for draw
         return avg_ear, mar, (left_eye_pts, right_eye_pts, mouth_pts)
+    
