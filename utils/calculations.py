@@ -46,3 +46,8 @@ def get_head_pose(frame_width,frame_height):
         [0, 0 , 1]
     ],dtype=np.float64)
     return face_3d_model , camera_matrix
+
+def calculate_distance(hand_point , face_point):
+    # calculate the staright line distance between the hand and the face
+    distance= math.dist(hand_point, face_point)
+    return distance

@@ -2,7 +2,7 @@
 
 # Threshold Targets (Partner A's math values)
 EAR_THRESHOLD = 0.25      # Below 0.25 = Eyes closed
-MAR_THRESHOLD = 0.65      # Above 0.65 = Mouth open wide (yawn)
+MAR_THRESHOLD = 0.45      # Above 0.65 = Mouth open wide (yawn)
 
 # Consecutive Frame Requirements (~30 FPS camera feed)
 EAR_CONSEC_FRAMES = 48    # ~1.5 - 2.0 seconds of closed eyes triggers alarm
