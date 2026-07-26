@@ -70,6 +70,8 @@ class FaceMeshDetector:
         min_distance = float('inf')
         if hands_results.multi_hand_landmarks:
             for hand_landmarks in hands_results.multi_hand_landmarks:
+                for lm in hand_landmarks.landmarks:
+                    hand_pts.append((int(lm.x * w), int(lm.y * h)))
                 # Grab the index finger tip (MediaPipe point 8)
                 index_x = int(hand_landmarks.landmark[8].x * w)
                 index_y = int(hand_landmarks.landmark[8].y * h)
@@ -88,7 +90,7 @@ class FaceMeshDetector:
     
 
         # return metrics and landmarks locations for draw
-        return avg_ear, mar, (pitch , yaw , roll) ,(left_eye_pts, right_eye_pts, mouth_pts) , min_distance
+        return avg_ear, mar, (pitch , yaw , roll) ,(left_eye_pts, right_eye_pts, mouth_pts) , min_distance , hand_pts
     def _calculate_head_angles(self, face_landmarks, frame_width, frame_height):
         # 1. Grab the 2D points from the webcam
         face_2d = []
