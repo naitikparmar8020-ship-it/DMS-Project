@@ -31,10 +31,10 @@ def get_head_pose(frame_width,frame_height):
     face_3d_model = np.array([
         (0.0 , 0.0 , 0.0 ) , #for nose tip
         (0.0 , -330.0 , -65.0 ), #chin
-        (-225.0 , 170.0 , 135.0) , #ledt eye corner  
+        (-225.0 , 170.0 , -135.0) , #ledt eye corner  
         (225.0 , 170.0 , -135.0), #right eye
-        (-150.0 , -150.0 , -150.0), #left mouth 
-        (150.0 , -125.0 , -150.0)  #right mouth
+        (-150.0 , -150.0 , -125.0), #left mouth 
+        (150.0 , -150.0 , -125.0)  #right mouth
     ],dtype=np.float64)
 
     # Calculate camera matrix using the width and height passed into the function

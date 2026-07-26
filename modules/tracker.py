@@ -13,8 +13,6 @@ class DrowsinessTracker:
         yawning, and phone distraction in real-time.
        """
    
-  
-
     def __init__(self):
         # 1. Temporal Frame Counters (persist state across video frames)
         self.eye_counter = 0
@@ -30,23 +28,29 @@ class DrowsinessTracker:
         pygame.mixer.init()
         try:
             self.alarm_sound = pygame.mixer.Sound(config.ALARM_PATH)
+            self.warning_sound = pygame.mixer.Sound(config.PHONE_PATH)
         except Exception as e:
-            print(f"[ERROR] Could not load alarm sound file from {config.ALARM_PATH}: {e}")
+            print(f"[ERROR] Could not load alarm sound : {e}")
             self.alarm_sound = None
+            self.warning_sound = None
 
-        self.alarm_playing = False
+        self.alarm_playing = None
 
-    def _play_alarm(self):
+    def _play_alarm(self, sound_obj):
         """Helper method to start looping the audio alarm in a background thread."""
-        if self.alarm_sound and not self.alarm_playing:
-            self.alarm_playing = True
-            self.alarm_sound.play(-1)  # -1 loops the sound indefinitely
+        # FIX: Only execute play/stop logic if the requested sound is DIFFERENT from what is currently playing
+        if self.alarm_playing != sound_obj:
+            pygame.mixer.stop()  # Master kill switch for all audio
+            if sound_obj is not None:
+                sound_obj.play(-1)  # Start the new sound exactly once
+            self.alarm_playing = sound_obj
 
     def _stop_alarm(self):
         """Helper method to stop the audio alarm if active."""
-        if self.alarm_sound and self.alarm_playing:
-            self.alarm_sound.stop()
-            self.alarm_playing = False
+        # FIX: Only execute the stop command if something is actually playing
+        if self.alarm_playing is not None:
+            pygame.mixer.stop()
+            self.alarm_playing = None
 
     def update(self, ear, mar, pitch, yaw, hand_distance):
         """
@@ -56,7 +60,9 @@ class DrowsinessTracker:
         Parameters:
             ear (float or None): Eye Aspect Ratio calculated by Partner A.
             mar (float or None): Mouth Aspect Ratio calculated by Partner A.
-            is_hand_near (bool) : True if a hand is detected within proximity of an ear.
+            pitch (float) : Head pitch angle.
+            yaw (float) : Head yaw angle.
+            hand_distance (float) : Distance in pixels between hand and cheek.
 
         Returns:
             status_text (str): Message to display on screen.
@@ -94,7 +100,7 @@ class DrowsinessTracker:
         # Get threshold from config or default to 20 frames
         phone_consec_frames = getattr(config, 'PHONE_CONSEC_FRAMES', 20)
         
-        if hand_distance < 80 or yaw > 30 or yaw < -30 or pitch < -20 :
+        if hand_distance < 80:
             self.phone_counter += 1
             if self.phone_counter >= phone_consec_frames:
                 self.phone_alert = True
@@ -108,12 +114,12 @@ class DrowsinessTracker:
         if self.drowsy_alert:
             status_text = "WARNING: DROWSY!"
             status_color = config.COLOR_RED
-            self._play_alarm()
+            self._play_alarm(self.alarm_sound)
 
         elif self.phone_alert:
             status_text = "WARNING: PHONE DISTRACTION!"
             status_color = config.COLOR_RED
-            self._stop_alarm()    
+            self._play_alarm(self.warning_sound)    
 
         elif self.yawn_alert:
             status_text = "WARNING: YAWNING DETECTED!"
@@ -128,14 +134,14 @@ class DrowsinessTracker:
     def draw_ui(self, frame, ear, mar, status_text, status_color, left_eye_pts=None, right_eye_pts=None, mouth_pts=None):
         """"
         Task 2 Implementation: Renders HUD elements, metrics, dynamic status,
-        and facial landmark countours directly on the openCV frame.
+        and facial landmark contours directly on the OpenCV frame.
         """ 
         # --- A. DRAW FACIAL OUTLINES ('cv2.polylines') ---
         # Draw green outlines around eyes and mouth if coordinates are passed by Partner A
         if left_eye_pts is not None and len(left_eye_pts) > 0:
             cv2.polylines(frame, [np.array(left_eye_pts, dtype=np.int32)], isClosed=True, color=(0, 255, 0), thickness=1)
 
-        if right_eye_pts is not None and len(right_eye_pts) >0:
+        if right_eye_pts is not None and len(right_eye_pts) > 0:
              cv2.polylines(frame, [np.array(right_eye_pts, dtype=np.int32)], isClosed=True, color=(0, 255, 0), thickness=1)
 
         if mouth_pts is not None and len(mouth_pts) > 0:
@@ -154,4 +160,3 @@ class DrowsinessTracker:
         cv2.putText(frame, status_text, (20, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.9, status_color, 3)
 
         return frame
-    
