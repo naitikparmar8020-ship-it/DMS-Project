@@ -6,20 +6,25 @@ import config
 
 class DrowsinessTracker:
     """
-     Module: State Logic, Temporal Tracking, and Audio Alerts.
-    
-    Tracks consecutive frames for low Eye Aspect Ratio (EAR) and high Mouth 
-    Aspect Ratio (MAR) to detect drowsiness and yawning in real-time.
-    """
+        Module: State Logic, Temporal Tracking, and Audio Alerts.
+        
+        Tracks consecutive frames for low Eye Aspect Ratio (EAR), high Mouth 
+        Aspect Ratio (MAR), and Hand-to-Ear proximity to detect drowsiness,
+        yawning, and phone distraction in real-time.
+       """
+   
+  
 
     def __init__(self):
         # 1. Temporal Frame Counters (persist state across video frames)
         self.eye_counter = 0
         self.mouth_counter = 0
+        self.phone_counter = 0
 
         # 2. State Flags
         self.drowsy_alert = False
         self.yawn_alert = False
+        self.phone_alert = False
 
         # 3. Audio Alarm Initialization
         pygame.mixer.init()
@@ -43,7 +48,7 @@ class DrowsinessTracker:
             self.alarm_sound.stop()
             self.alarm_playing = False
 
-    def update(self, ear, mar):
+    def update(self, ear, mar, pitch, yaw, hand_distance):
         """
         Updates frame counters based on incoming EAR and MAR values, determines 
         system alerts, manages sound, and returns UI display outputs.
@@ -51,6 +56,7 @@ class DrowsinessTracker:
         Parameters:
             ear (float or None): Eye Aspect Ratio calculated by Partner A.
             mar (float or None): Mouth Aspect Ratio calculated by Partner A.
+            is_hand_near (bool) : True if a hand is detected within proximity of an ear.
 
         Returns:
             status_text (str): Message to display on screen.
@@ -83,22 +89,38 @@ class DrowsinessTracker:
             self.yawn_alert = False
 
         # -------------------------------------------------------------
-        # 3. PRIORITY STATE RESOLUTION & ALERTS
+        # 3. HAND-TO-EAR PROXIMITY (PHONE DISTRACTION) LOGIC
+        # -------------------------------------------------------------
+        # Get threshold from config or default to 20 frames
+        phone_consec_frames = getattr(config, 'PHONE_CONSEC_FRAMES', 20)
+        
+        if hand_distance < 80 or yaw > 30 or yaw < -30 or pitch < -20 :
+            self.phone_counter += 1
+            if self.phone_counter >= phone_consec_frames:
+                self.phone_alert = True
+        else:
+            self.phone_counter = 0
+            self.phone_alert = False
+
+        # -------------------------------------------------------------
+        # 4. PRIORITY STATE RESOLUTION & ALERTS
         # -------------------------------------------------------------
         if self.drowsy_alert:
             status_text = "WARNING: DROWSY!"
             status_color = config.COLOR_RED
-
             self._play_alarm()
+
+        elif self.phone_alert:
+            status_text = "WARNING: PHONE DISTRACTION!"
+            status_color = config.COLOR_RED
+            self._stop_alarm()    
 
         elif self.yawn_alert:
             status_text = "WARNING: YAWNING DETECTED!"
-
             status_color = config.COLOR_YELLOW
             self._stop_alarm()
 
         else:
-
             self._stop_alarm()
 
         return status_text, status_color
@@ -119,7 +141,7 @@ class DrowsinessTracker:
         if mouth_pts is not None and len(mouth_pts) > 0:
             cv2.polylines(frame, [np.array(mouth_pts, dtype=np.int32)], isClosed=True, color=(0, 255, 0), thickness=1)
 
-        # --- B. DISPLAY REAL-TIME METRICS ('CV2.putText')
+        # --- C. DISPLAY REAL-TIME METRICS ('CV2.putText')
         ear_str = f"EAR: {ear:.2f}" if ear is not None else "EAR: N/A"
         mar_str = f"MAR: {mar:.2f}" if mar is not None else "MAR: N/A"
 
@@ -127,7 +149,7 @@ class DrowsinessTracker:
         cv2.putText(frame, ear_str, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         cv2.putText(frame, mar_str, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2) 
         
-        # --- C. DYNAMIC STATUS BANNER ---
+        # --- D. DYNAMIC STATUS BANNER ---
         # Draw dynamic text with dynamic background color at top-center of the screen
         cv2.putText(frame, status_text, (20, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.9, status_color, 3)
 
