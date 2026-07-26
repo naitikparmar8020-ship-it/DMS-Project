@@ -2,13 +2,13 @@
 
 # Threshold Targets (Partner A's math values)
 EAR_THRESHOLD = 0.25      # Below 0.25 = Eyes closed
-MAR_THRESHOLD = 0.65      # Above 0.65 = Mouth open wide (yawn)
+MAR_THRESHOLD = 0.60      # Above 0.65 = Mouth open wide (yawn)
 # Phone Distraction
 HAND_EAR_PROXIMITY_THRESHOLD = 30 # Distance in pixels
 
 # Consecutive Frame Requirements (~30 FPS camera feed)
 EAR_CONSEC_FRAMES = 48    # ~1.5 - 2.0 seconds of closed eyes triggers alarm
-MAR_CONSEC_FRAMES = 30    # ~1.0 second of continuous yawning triggers alert
+MAR_CONSEC_FRAMES = 20    # ~1.0 second of continuous yawning triggers alert
 PHONE_CONSEC_FRAMES = 30 # Number of consecutive frames to trigger alert
 
 # File Paths

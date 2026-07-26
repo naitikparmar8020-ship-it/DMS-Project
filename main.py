@@ -25,19 +25,19 @@ def test_run():
         # 4. Handle the results (only run if a face is actually found)
         if results[0] is not None:
             # Unpack the 3 main items you returned
-            avg_ear, mar, head_pose , landmarks, hand_distance , hand_pts = results
+            avg_ear, mar, head_pose , landmarks, hand_distance , hand_pts , phone_detected , phone_box= results
             
             # Unpack the 3 lists of coordinates for the drawing function
             pitch , yaw , roll = head_pose
             left_eye_pts, right_eye_pts, mouth_pts = landmarks
             
             # Feed your numbers into her tracker logic
-            status_text, status_color= tracker.update(avg_ear, mar , pitch ,yaw , hand_distance)
+            status_text, status_color= tracker.update(avg_ear, mar , pitch ,yaw , hand_distance , phone_detected)
             
             # Hand everything to her drawing function to paint the UI onto the frame
             frame = tracker.draw_ui(
                 frame, avg_ear, mar, status_text, status_color,
-                left_eye_pts, right_eye_pts, mouth_pts , hand_pts
+                left_eye_pts, right_eye_pts, mouth_pts , hand_pts , phone_box
             )
             
             # Print the live data to the terminal to verify your math is running

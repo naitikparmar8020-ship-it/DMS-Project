@@ -131,7 +131,7 @@ class DrowsinessTracker:
 
         return status_text, status_color
 
-    def draw_ui(self, frame, ear, mar, status_text, status_color, left_eye_pts=None, right_eye_pts=None, mouth_pts=None):
+    def draw_ui(self, frame, ear, mar, status_text, status_color, left_eye_pts=None, right_eye_pts=None, mouth_pts=None, hand_pts=None):
         """"
         Task 2 Implementation: Renders HUD elements, metrics, dynamic status,
         and facial landmark contours directly on the OpenCV frame.

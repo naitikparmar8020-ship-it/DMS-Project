@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+from ultralytics import YOLO
 from utils.calculations import calculate_mar, calculate_ear , get_head_pose , calculate_distance
 
 class FaceMeshDetector:
@@ -26,9 +27,25 @@ class FaceMeshDetector:
         self.HAND_TIP_IDX= 8
         self.HAND_WRTIST_IDX =0
 
+        # YOLO Nano model download
+        self.yolo_model = YOLO ("yolo8n.pt")
+        self.PHONE_CLASS_ID=67
 
     def process_frame(self, frame):
         h, w, _ = frame.shape
+        # yolo detection
+        phone_detected = False
+        phon_box = None
+
+        yolo_results = self.yolo_model(frame , stream = True,verbose=False) #verbose+false prevent out terminal from spamming with text every frame
+        for result in yolo_results:
+            for box in result.boxes:
+                if int(box.cls[0]) == self.PHONE_CLASS_ID:
+                    phone_detected = True
+                    # grab the bounding box detection 
+                    x1, y1, x2, y2 =map(int, box.xyxy[0])
+                    phone_box=(x1,y1,x2,y2)
+                    break #phone found stop searching this frame
 
         # mediapipe requires rgb images
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -37,7 +54,7 @@ class FaceMeshDetector:
 
         # if no face visible then return None values
         if not results.multi_face_landmarks:
-            return None, None, None , None , None
+            return None, None, None , None , None , None , None 
 
         # take the first landmarks of the first face detected
         face_landmarks = results.multi_face_landmarks[0]
@@ -70,7 +87,7 @@ class FaceMeshDetector:
         min_distance = float('inf')
         if hands_results.multi_hand_landmarks:
             for hand_landmarks in hands_results.multi_hand_landmarks:
-                for lm in hand_landmarks.landmarks:
+                for lm in hand_landmarks.landmark:
                     hand_pts.append((int(lm.x * w), int(lm.y * h)))
                 # Grab the index finger tip (MediaPipe point 8)
                 index_x = int(hand_landmarks.landmark[8].x * w)
@@ -90,7 +107,7 @@ class FaceMeshDetector:
     
 
         # return metrics and landmarks locations for draw
-        return avg_ear, mar, (pitch , yaw , roll) ,(left_eye_pts, right_eye_pts, mouth_pts) , min_distance , hand_pts
+        return avg_ear, mar, (pitch , yaw , roll) ,(left_eye_pts, right_eye_pts, mouth_pts) , min_distance , hand_pts , phone_detected , phone_box
     def _calculate_head_angles(self, face_landmarks, frame_width, frame_height):
         # 1. Grab the 2D points from the webcam
         face_2d = []
