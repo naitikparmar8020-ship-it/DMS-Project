@@ -39,7 +39,7 @@ def test_run():
                 frame, avg_ear, mar, status_text, status_color,
                 left_eye_pts, right_eye_pts, mouth_pts , hand_pts , phone_box
             )
-            
+            # This data show on your terminal
             # Print the live data to the terminal to verify your math is running
             print(f"EAR: {avg_ear:.2f} | MAR: {mar:.2f} | YAW: {yaw:.2f} | Hand_Dist:{hand_distance:.2f} |Status: {status_text}")
         else:
