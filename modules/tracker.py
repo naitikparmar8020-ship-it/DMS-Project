@@ -52,7 +52,7 @@ class DrowsinessTracker:
             pygame.mixer.stop()
             self.alarm_playing = None
 
-    def update(self, ear, mar, pitch, yaw, hand_distance):
+    def update(self, ear, mar, pitch, yaw, hand_distance, phone_detected):
         """
         Updates frame counters based on incoming EAR and MAR values, determines 
         system alerts, manages sound, and returns UI display outputs.
@@ -99,6 +99,14 @@ class DrowsinessTracker:
         # -------------------------------------------------------------
         # Get threshold from config or default to 20 frames
         phone_consec_frames = getattr(config, 'PHONE_CONSEC_FRAMES', 20)
+        # Trigger if the phone seen
+        if phone_detected or hand_distance < 80:
+            self.phone_counter += 1
+            if self.phone_counter >= phone_consec_frames:
+                self.phone_alert = True
+        else:
+            self.phone_counter = 0
+            self.phone_alert = False
         
         if hand_distance < 50:
             self.phone_counter += 1
@@ -131,7 +139,7 @@ class DrowsinessTracker:
 
         return status_text, status_color
 
-    def draw_ui(self, frame, ear, mar, status_text, status_color, left_eye_pts=None, right_eye_pts=None, mouth_pts=None, hand_pts=None):
+    def draw_ui(self, frame, ear, mar, status_text, status_color, left_eye_pts=None, right_eye_pts=None, mouth_pts=None, hand_pts=None, phone_box=None):
         """"
         Task 2 Implementation: Renders HUD elements, metrics, dynamic status,
         and facial landmark contours directly on the OpenCV frame.
@@ -150,7 +158,15 @@ class DrowsinessTracker:
         if hand_pts is not None and len(hand_pts) > 0:
             for pt in hand_pts:
                 cv2.circle(frame, pt, 4, (0, 165, 255), -1)
+        
                  # Orange circles for hand landmarks
+        if phone_box is not None:
+            x1, y1, x2, y2 = phone_box
+            # Rectangle around phone
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 255), 3)
+            # Add label
+            cv2.putText(frame, "Phone Detected", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
+             
         # --- C. DISPLAY REAL-TIME METRICS ('CV2.putText')
         ear_str = f"EAR: {ear:.2f}" if ear is not None else "EAR: N/A"
         mar_str = f"MAR: {mar:.2f}" if mar is not None else "MAR: N/A"
