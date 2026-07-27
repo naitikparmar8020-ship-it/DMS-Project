@@ -100,7 +100,7 @@ class DrowsinessTracker:
         # Get threshold from config or default to 20 frames
         phone_consec_frames = getattr(config, 'PHONE_CONSEC_FRAMES', 20)
         
-        if hand_distance < 80:
+        if hand_distance < 50:
             self.phone_counter += 1
             if self.phone_counter >= phone_consec_frames:
                 self.phone_alert = True
@@ -147,6 +147,10 @@ class DrowsinessTracker:
         if mouth_pts is not None and len(mouth_pts) > 0:
             cv2.polylines(frame, [np.array(mouth_pts, dtype=np.int32)], isClosed=True, color=(0, 255, 0), thickness=1)
 
+        if hand_pts is not None and len(hand_pts) > 0:
+            for pt in hand_pts:
+                cv2.circle(frame, pt, 4, (0, 165, 255), -1)
+                 # Orange circles for hand landmarks
         # --- C. DISPLAY REAL-TIME METRICS ('CV2.putText')
         ear_str = f"EAR: {ear:.2f}" if ear is not None else "EAR: N/A"
         mar_str = f"MAR: {mar:.2f}" if mar is not None else "MAR: N/A"
@@ -154,6 +158,7 @@ class DrowsinessTracker:
         # Top-left telemetry readings
         cv2.putText(frame, ear_str, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         cv2.putText(frame, mar_str, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2) 
+        cv2.putText(frame, status_text, (20, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.9, status_color, 3)
         
         # --- D. DYNAMIC STATUS BANNER ---
         # Draw dynamic text with dynamic background color at top-center of the screen

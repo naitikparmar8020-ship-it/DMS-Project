@@ -4,7 +4,7 @@
 EAR_THRESHOLD = 0.25      # Below 0.25 = Eyes closed
 MAR_THRESHOLD = 0.65      # Above 0.65 = Mouth open wide (yawn)
 # Phone Distraction
-HAND_EAR_PROXIMITY_THRESHOLD = 40 # Distance in pixels
+HAND_EAR_PROXIMITY_THRESHOLD = 30 # Distance in pixels
 
 # Consecutive Frame Requirements (~30 FPS camera feed)
 EAR_CONSEC_FRAMES = 48    # ~1.5 - 2.0 seconds of closed eyes triggers alarm
