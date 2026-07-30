@@ -51,6 +51,10 @@ class DrowsinessTracker:
         if self.alarm_playing is not None:
             pygame.mixer.stop()
             self.alarm_playing = None
+    def log_event(self , event_name , value):
+        with open(self.log_file, mode='a', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([datetime.now().strfile("%Y-%m-%d %H:%M:%S"), event_name , f"{value:.2f}"])
 
     def update(self, ear, mar, pitch, yaw, hand_distance, phone_detected):
         """
