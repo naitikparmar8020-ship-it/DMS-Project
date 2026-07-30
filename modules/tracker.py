@@ -100,7 +100,7 @@ class DrowsinessTracker:
         # Get threshold from config or default to 20 frames
         phone_consec_frames = getattr(config, 'PHONE_CONSEC_FRAMES', 20)
         # Trigger if the phone seen
-        if phone_detected or hand_distance < 80:
+        if phone_detected and hand_distance < 80:
             self.phone_counter += 1
             if self.phone_counter >= phone_consec_frames:
                 self.phone_alert = True
