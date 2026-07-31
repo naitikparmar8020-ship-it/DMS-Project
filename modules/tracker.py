@@ -31,6 +31,7 @@ class DrowsinessTracker:
         self.drowsy_alert = False
         self.yawn_alert = False
         self.phone_alert = False
+        self.looking_down_alert = False
 
         # dynamic calibration variables
         self.is_calibrating = True
@@ -54,6 +55,7 @@ class DrowsinessTracker:
         self.log_lock_drowsy = False
         self.log_lock_yawn = False
         self.log_lock_phone = False
+        self.log_lock_lookingDown = False
          
 
 
@@ -131,17 +133,34 @@ class DrowsinessTracker:
         # PHASE 2: EVENT DETECTION & LOGGING
         # ==========================================
         #  calculate dynamic thresolds for every driver
-        drowsy_thres=self.baseline_ear * 0.75
+        drowsy_thres=self.baseline_ear * 0.65
         yawn_thres=self.baseline_mar * 1.2
-        phone_consec_frames = getattr(config , 'PHONE_CONSEC_FRAMES', 7)
+        look_down_thres=self.baseline_ear * 0.78
+        print(drowsy_thres)
 
+        # phone_consec_frames = getattr(config , 'PHONE_CONSEC_FRAMES', 7)
+
+        # looking down 
+        if ear < look_down_thres:
+            self.looking_down_counter +=1
+            if self.looking_down_counter >= getattr(config , 'LOOKDOWN_CONSEC_FRAMES',6):
+                self.looking_down_alert =True
+                # write into csv
+                self.log_event("Looking Down Detected", ear)
+                self.log_lock_lookingDown=True
+        else:
+            self.looking_down_counter=0
+            self.looking_down_alert=False
+            self.log_lock_lookingDown = False
+
+        
         # drowsiness EAR
         if ear < drowsy_thres:
             self.drowsy_counter += 1
-            if self.drowsy_counter >=getattr(config , 'DROWSINESS_CONSEC_FRAMES', 20):
+            if self.drowsy_counter >=getattr(config , 'DROWSINESS_CONSEC_FRAMES', 6):
                 self.drowsy_alert = True
                 # write to CSV once per incidence
-                self.log_event("Drowsiness Detected",mar)
+                self.log_event("Drowsiness Detected",ear)
                 self.log_lock_drowsy =True
         else:
             self.drowsy_counter =0
@@ -180,6 +199,8 @@ class DrowsinessTracker:
         elif self.drowsy_alert:
             self._play_alarm(self.alarm_sound)
             return "Warning: Drowsiness Detected" ,(0 , 0 , 255)
+        elif self.looking_down_alert:
+            return "Warning: Looking Down Detected", (0 , 0, 255)
         elif self.yawn_alert:
             self._stop_alarm()
             return "Warning: Yawning Detected" ,(0 , 165 , 255)
