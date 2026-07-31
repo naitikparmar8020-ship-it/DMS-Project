@@ -38,11 +38,11 @@ class FaceMeshDetector:
     def process_frame(self, frame):
         h, w, _ = frame.shape
         # frame skippier
-        self.frame_counter+=1
-        if self.frame_counter % 5 == 0:
+       # self.frame_counter+=1
+        # if self.frame_counter % 5 == 0:
             #now reset this for new scan
-            self.last_phone_detected =False
-            self.last_phone_box = None
+           # self.last_phone_detected =False
+           # self.last_phone_box = None
         # yolo detection
         phone_detected = False
         phone_box = None
@@ -56,8 +56,8 @@ class FaceMeshDetector:
                     x1, y1, x2, y2 =map(int, box.xyxy[0])
                     phone_box=(x1,y1,x2,y2)
                     break #phone found stop searching this frame
-        phone_detected=self.last_phone_detected
-        phone_box=self.last_phone_box
+       # phone_detected=self.last_phone_detected
+       # phone_box=self.last_phone_box
         # mediapipe requires rgb images
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.face_mesh.process(rgb_frame)

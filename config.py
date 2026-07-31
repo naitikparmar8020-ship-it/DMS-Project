@@ -9,7 +9,7 @@ HAND_EAR_PROXIMITY_THRESHOLD = 30 # Distance in pixels
 # Consecutive Frame Requirements (~30 FPS camera feed)
 EAR_CONSEC_FRAMES = 48    # ~1.5 - 2.0 seconds of closed eyes triggers alarm
 MAR_CONSEC_FRAMES = 20    # ~1.0 second of continuous yawning triggers alert
-PHONE_CONSEC_FRAMES = 30 # Number of consecutive frames to trigger alert
+PHONE_CONSEC_FRAMES = 5 # Number of consecutive frames to trigger alert
 
 # File Paths
 ALARM_PATH = "assets/alarm.wav"
