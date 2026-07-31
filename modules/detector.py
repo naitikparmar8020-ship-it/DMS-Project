@@ -47,7 +47,7 @@ class FaceMeshDetector:
         phone_detected = False
         phone_box = None
 
-        yolo_results = self.yolo_model(frame , stream = True,verbose=False, conf=0.30) #verbose+false prevent out terminal from spamming with text every frame
+        yolo_results = self.yolo_model(frame , stream = True,verbose=False , conf=0.20) #verbose+false prevent out terminal from spamming with text every frame
         for result in yolo_results:
             for box in result.boxes:
                 if int(box.cls[0]) == self.PHONE_CLASS_ID:
@@ -106,12 +106,19 @@ class FaceMeshDetector:
                 hand_point = (index_x, index_y)
 
                 # Grab the left cheek (MediaPipe point 234) from your face mesh
-                cheek_x = int(face_landmarks.landmark[234].x * w)
-                cheek_y = int(face_landmarks.landmark[234].y * h)
-                cheek_point = (cheek_x, cheek_y)
+                cheek_xl = int(face_landmarks.landmark[234].x * w)
+                cheek_yl = int(face_landmarks.landmark[234].y * h)
+                cheek_point = (cheek_xl, cheek_yl)
 
-                dist= calculate_distance(hand_point,cheek_point)
+                #  grab the right cheek
+                cheek_xr =int(face_landmarks.landmark[454].x*w)
+                cheek_yr=int(face_landmarks.landmark[454].y*h)
+                cheek_point_r=(cheek_xr,cheek_yr)
 
+                dist1= calculate_distance(hand_point,cheek_point)
+                dist2= calculate_distance(hand_point,cheek_point_r)
+
+                dist=min(dist1,dist2)
                 # Keep the smallest distance (in case both hands are on screen)
                 if dist < min_distance:
                     min_distance = dist

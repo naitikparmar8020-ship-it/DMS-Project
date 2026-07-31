@@ -125,7 +125,7 @@ class DrowsinessTracker:
         # 3. HAND-TO-EAR PROXIMITY (PHONE DISTRACTION) LOGIC
         # -------------------------------------------------------------
         # Get threshold from config or default to 20 frames
-        phone_consec_frames = getattr(config, 'PHONE_CONSEC_FRAMES', 20)
+        phone_consec_frames = getattr(config, 'PHONE_CONSEC_FRAMES')
         # Trigger if the phone seen
         if phone_detected and hand_distance < 80:
             self.phone_counter += 1
