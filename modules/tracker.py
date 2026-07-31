@@ -40,7 +40,7 @@ class DrowsinessTracker:
         # CSV SESSION LOGGING VARIABLES
         self.log_file = "driver_log.csv"
         # if the file does not exist, create it and write the header
-        if not os.path.exists(self.log_file, mode = 'W', newline=")as f:
+        if not os.path.exists(self.log_file, mode = 'W', newline='')as f:
             writer = csv.writer(f)
         writer.writerow(["Timestamp", "Event_Type", "Value"])
 
