@@ -30,14 +30,24 @@ class FaceMeshDetector:
         # YOLO Nano model download
         self.yolo_model = YOLO ("yolov8n.pt")
         self.PHONE_CLASS_ID=67
+        # it will skips the frames
+        self.frame_counter = 0
+        self.last_phone_detected = False
+        self.last_phone_box = None        
 
     def process_frame(self, frame):
         h, w, _ = frame.shape
+        # frame skippier
+        self.frame_counter+=1
+        if self.frame_counter % 5 == 0:
+            #now reset this for new scan
+            self.last_phone_detected =False
+            self.last_phone_box = None
         # yolo detection
         phone_detected = False
         phone_box = None
 
-        yolo_results = self.yolo_model(frame , stream = True,verbose=False) #verbose+false prevent out terminal from spamming with text every frame
+        yolo_results = self.yolo_model(frame , stream = True,verbose=False, conf=0.15) #verbose+false prevent out terminal from spamming with text every frame
         for result in yolo_results:
             for box in result.boxes:
                 if int(box.cls[0]) == self.PHONE_CLASS_ID:
@@ -46,7 +56,8 @@ class FaceMeshDetector:
                     x1, y1, x2, y2 =map(int, box.xyxy[0])
                     phone_box=(x1,y1,x2,y2)
                     break #phone found stop searching this frame
-
+        phone_detected=self.last_phone_detected
+        phone_box=self.last_phone_box
         # mediapipe requires rgb images
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.face_mesh.process(rgb_frame)

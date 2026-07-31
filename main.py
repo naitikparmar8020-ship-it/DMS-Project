@@ -6,6 +6,9 @@ import config
 def test_run():
     # 1. Open the webcam (Using 0 for default camera)
     cap = cv2.VideoCapture(0)
+    # this line of code will reduce the resoultion 
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     
     # 2. Initialize both the detector (your math) and the tracker (her UI/logic)
     detector = FaceMeshDetector()
