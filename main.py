@@ -26,7 +26,7 @@ def test_run():
         # 3. Pass the frame to your math module
         results = detector.process_frame(frame)
         
-        # 4. Handle the results (only run if a face is actually found)
+        # 4. Handle the results (only run if a face is actually found)  
         if results[0] is not None:
             # Unpack the 3 main items you returned
             avg_ear, mar, head_pose , landmarks, hand_distance , hand_pts , phone_detected , phone_box= results

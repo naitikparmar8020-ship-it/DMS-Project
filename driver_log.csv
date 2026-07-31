@@ -581,3 +581,9 @@ Timestamp,Event_Type,Value
 2026-08-01 00:01:27,Looking Down Detected,0.10
 2026-08-01 00:01:27,Looking Down Detected,0.15
 2026-08-01 00:01:27,Looking Down Detected,0.12
+2026-08-01 01:05:41,Session_Started,0.00
+2026-08-01 01:06:14,Yawn Detected,0.17
+2026-08-01 01:14:16,Session_Started,0.00
+2026-08-01 01:16:07,Session_Started,0.00
+2026-08-01 01:16:45,Phone Distraction,7.62
+2026-08-01 01:16:46,Phone Distraction,9.85

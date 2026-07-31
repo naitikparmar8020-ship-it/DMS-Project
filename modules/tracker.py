@@ -26,6 +26,7 @@ class DrowsinessTracker:
         self.phone_history=[]
         self.history_length=30 #it look at last 10 frames
         self.alert_threshold = 15 #sound play if phone detected in those 10 frames 
+        self.prev_mar = 0.0
 
         # 2. State Flags
         self.drowsy_alert = False
@@ -57,8 +58,6 @@ class DrowsinessTracker:
         self.log_lock_phone = False
         self.log_lock_lookingDown = False
          
-
-
         # 3. Audio Alarm Initialization
         pygame.mixer.init()
         try:
@@ -107,9 +106,6 @@ class DrowsinessTracker:
             status_text (str): Message to display on screen.
             status_color (tuple BGR): OpenCV color code (Blue, Green, Red).
         """
-        # Default State: Safe / Alert
-        status_text = "Status: Safe"
-        status_color = config.COLOR_GREEN
         # ==========================================
         #  DYNAMIC AUTO-CALIBRATION
         # ==========================================
@@ -178,12 +174,16 @@ class DrowsinessTracker:
             self.yawn_counter = 0
             self.yawn_alert = False
             self.log_lock_yawn =False
+
         # phone distraction
-        current_detection=(phone_detected and hand_distance < 250)
+        lips_movement=abs(mar - self.prev_mar) #this will calcutate that how much lips move from last time
+        self.prev_mar = mar  #save the current mouth size for the next frame
+        current_detection=(phone_detected and hand_distance < 250 and lips_movement > 0.02)
         self.phone_history.append(current_detection)
+        
         if len(self.phone_history) > self.history_length:
             self.phone_history.pop(0)
-        if sum(self.phone_history)>=self.alert_threshold:
+        if sum(self.phone_history) >=self.alert_threshold:
                 self.phone_alert=True
                 if not self.log_lock_phone:
                     self.log_event("Phone Distraction",hand_distance)
