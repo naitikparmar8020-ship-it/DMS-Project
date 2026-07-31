@@ -47,7 +47,7 @@ class FaceMeshDetector:
         phone_detected = False
         phone_box = None
 
-        yolo_results = self.yolo_model(frame , stream = True,verbose=False, conf=0.15) #verbose+false prevent out terminal from spamming with text every frame
+        yolo_results = self.yolo_model(frame , stream = True,verbose=False, conf=0.30) #verbose+false prevent out terminal from spamming with text every frame
         for result in yolo_results:
             for box in result.boxes:
                 if int(box.cls[0]) == self.PHONE_CLASS_ID:
