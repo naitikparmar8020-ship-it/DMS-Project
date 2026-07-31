@@ -22,6 +22,7 @@ class DrowsinessTracker:
         self.eye_counter = 0
         self.mouth_counter = 0
         self.phone_counter = 0
+        self.yawn_counter = 0
 
         # 2. State Flags
         self.drowsy_alert = False
@@ -122,77 +123,65 @@ class DrowsinessTracker:
                     print(f"Calibration Complete! Baseline EAR: {self.baseline_ear:.2f} | MAR: {self.baseline_mar:.2f}")
                     
             return f"CALIBRATING ({self.calib_frames_done}/{self.calib_frames_needed})", (0, 255, 255)
+        # we have to new line of code here 
+        # ==========================================
         # PHASE 2: EVENT DETECTION & LOGGING
-        # Calculate dynamic thresholds based on THIS specific driver
-        drowsy_thresh = self.baseline_ear * 0.75  # Alert if eyes close 25% past normal
-        yawn_thresh = self.baseline_mar * 1.5     # Alert if mouth opens 50% wider than normal
-        phone_consec_frames = getattr(config, 'PHONE_CONSEC_FRAMES', 5)
-        # -------------------------------------------------------------
-        # 1. EYE ASPECT RATIO (DROWSINESS) LOGIC
-        # -------------------------------------------------------------
-        if ear is not None and ear < config.EAR_THRESHOLD:
-            self.eye_counter += 1
-            if self.eye_counter >= config.EAR_CONSEC_FRAMES:
+        # ==========================================
+        #  calculate dynamic thresolds for every driver
+        drowsy_thres=self.baseline_ear * 0.75
+        yawn_thres=self.baseline_mar * 1.2
+        phone_consec_frames = getattr(config , 'PHONE_CONSEC_FRAMES', 7)
+
+        # drowsiness EAR
+        if ear < drowsy_thres:
+            self.drowsy_counter += 1
+            if self.drowsy_counter >=getattr(config , 'DROWSINESS_CONSEC_FRAMES', 20):
                 self.drowsy_alert = True
+                # write to CSV once per incidence
+                self.log_event("Drowsiness Detected",mar)
+                self.log_lock_drowsy =True
         else:
-            self.eye_counter = 0
+            self.drowsy_counter =0
             self.drowsy_alert = False
-
-        # -------------------------------------------------------------
-        # 2. MOUTH ASPECT RATIO (YAWNING) LOGIC
-        # -------------------------------------------------------------
-        if mar is not None and mar > config.MAR_THRESHOLD:
-            self.mouth_counter += 1
-            if self.mouth_counter >= config.MAR_CONSEC_FRAMES:
+            self.log_lock_drowsy =False
+        #  yawning MAR
+        if mar > yawn_thres:
+            self.yawn_counter +=1
+            if self.yawn_counter >= getattr(config , 'YAWN_CONSEC_FRAME', 15):
                 self.yawn_alert = True
+                if not self.log_lock_yawn:
+                    self.log_event("Yawn Detected" ,mar)
+                    self.log_lock_yawn = True
         else:
-            self.mouth_counter = 0
+            self.yawn_counter = 0
             self.yawn_alert = False
-
-        # -------------------------------------------------------------
-        # 3. HAND-TO-EAR PROXIMITY (PHONE DISTRACTION) LOGIC
-        # -------------------------------------------------------------
-        # Get threshold from config or default to 20 frames
-        phone_consec_frames = getattr(config, 'PHONE_CONSEC_FRAMES', 5)
-        # Trigger if the phone seen
-        if phone_detected and hand_distance < 80:
+            self.log_lock_yawn =False
+        # phone distraction
+        if phone_detected and hand_distance < 250:
             self.phone_counter += 1
+            print(self.phone_counter)
             if self.phone_counter >= phone_consec_frames:
                 self.phone_alert = True
+                if not self.log_lock_phone:
+                    self.log_event("Phone Distraction",hand_distance)
+                    self.log_lock_phone=True
         else:
             self.phone_counter = 0
-            self.phone_alert = False
-        
-        if hand_distance < 50:
-            self.phone_counter += 1
-            if self.phone_counter >= phone_consec_frames:
-                self.phone_alert = True
-        else:
-            self.phone_counter = 0
-            self.phone_alert = False
-
-        # -------------------------------------------------------------
-        # 4. PRIORITY STATE RESOLUTION & ALERTS
-        # -------------------------------------------------------------
-        if self.drowsy_alert:
-            status_text = "WARNING: DROWSY!"
-            status_color = config.COLOR_RED
+            self.phone_alert= False
+            self.log_lock_phone = False
+        #  priortiy status banner
+        if self.phone_alert:
+            self._play_alarm(self.warning_sound)
+            return "Warning: Phone Distraction" , (0 , 0 , 255) 
+        elif self.drowsy_alert:
             self._play_alarm(self.alarm_sound)
-
-        elif self.phone_alert:
-            status_text = "WARNING: PHONE DISTRACTION!"
-            status_color = config.COLOR_RED
-            self._play_alarm(self.warning_sound)    
-
+            return "Warning: Drowsiness Detected" ,(0 , 0 , 255)
         elif self.yawn_alert:
-            status_text = "WARNING: YAWNING DETECTED!"
-            status_color = config.COLOR_YELLOW
             self._stop_alarm()
-
+            return "Warning: Yawning Detected" ,(0 , 165 , 255)
         else:
             self._stop_alarm()
-
-        return status_text, status_color
+            return "Driver Active", (0, 255, 0)
 
     def draw_ui(self, frame, ear, mar, status_text, status_color, left_eye_pts=None, right_eye_pts=None, mouth_pts=None, hand_pts=None, phone_box=None):
         """"

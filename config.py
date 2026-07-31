@@ -1,15 +1,14 @@
-# config.py
-
-# Threshold Targets (Partner A's math values)
+# Threshold Targets (Fallback values for Auto-Calibration)
 EAR_THRESHOLD = 0.25      # Below 0.25 = Eyes closed
 MAR_THRESHOLD = 0.60      # Above 0.65 = Mouth open wide (yawn)
-# Phone Distraction
-HAND_EAR_PROXIMITY_THRESHOLD = 30 # Distance in pixels
 
-# Consecutive Frame Requirements (~30 FPS camera feed)
-EAR_CONSEC_FRAMES = 48    # ~1.5 - 2.0 seconds of closed eyes triggers alarm
-MAR_CONSEC_FRAMES = 20    # ~1.0 second of continuous yawning triggers alert
-PHONE_CONSEC_FRAMES = 20 # Number of consecutive frames to trigger alert
+# Phone Distraction
+HAND_EAR_PROXIMITY_THRESHOLD = 250 # Increased for high-resolution distance
+
+# Consecutive Frame Requirements (Tuned for low FPS)
+DROWSINESS_CONSEC_FRAMES = 5  # ~1.5 seconds at current FPS
+YAWN_CONSEC_FRAMES = 20      # ~1.5 seconds at current FPS
+PHONE_CONSEC_FRAMES = 10       # ~1.5 seconds at current FPS
 
 # File Paths
 ALARM_PATH = "assets/alarm.wav"

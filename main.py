@@ -1,7 +1,7 @@
 import cv2
 from modules.detector import FaceMeshDetector
 from modules.tracker import DrowsinessTracker
-import config
+
 
 def test_run():
     # 1. Open the webcam (Using 0 for default camera)
@@ -17,6 +17,7 @@ def test_run():
     print("Starting test... Press 'q' to quit.")
 
     while True:
+
         success, frame = cap.read()
         if not success:
             print("Failed to grab frame.")
