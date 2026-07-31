@@ -30,8 +30,8 @@ class DrowsinessTracker:
 
         # dynamic calibration variables
         self.is_calibrating = True
-        self.calib_frame_needed = 100 # captures roughly 3-5 seconds of video
-        self.calib_frame_done = 0
+        self.calib_frames_needed = 100 # captures roughly 3-5 seconds of video
+        self.calib_frames_done = 0
         self.ear_sum = 0.0
         self.mar_sum = 0.0
         self.baseline_mar = 0.25 # fallback defaults
@@ -40,9 +40,11 @@ class DrowsinessTracker:
         # CSV SESSION LOGGING VARIABLES
         self.log_file = "driver_log.csv"
         # if the file does not exist, create it and write the header
-        if not os.path.exists(self.log_file, mode = 'W', newline='')as f:
-            writer = csv.writer(f)
-        writer.writerow(["Timestamp", "Event_Type", "Value"])
+        if not os.path.exists(self.log_file):
+                               
+            with open (self.log_file , mode = 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(["Timestamp", "Event_Type", "Value"])
 
         # "LOCKS" to prevent spamming the CSV with 30 lines per second
         self.log_lock_drowsy = False
@@ -54,7 +56,7 @@ class DrowsinessTracker:
         # 3. Audio Alarm Initialization
         pygame.mixer.init()
         try:
-            self.alarm_sound = pygame.mixer.Sound(config.ALARM_PATH
+            self.alarm_sound = pygame.mixer.Sound(config.ALARM_PATH)
             self.warning_sound = pygame.mixer.Sound(config.PHONE_PATH)
         except Exception as e:
             print(f"[ERROR] Could not load alarm sound : {e}")
@@ -81,7 +83,7 @@ class DrowsinessTracker:
     def log_event(self , event_name , value):
         with open(self.log_file, mode='a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([datetime.now().strfile("%Y-%m-%d %H:%M:%S"), event_name , f"{value:.2f}"])
+            writer.writerow([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), event_name , f"{value:.2f}"])
 
     def update(self, ear, mar, pitch, yaw, hand_distance, phone_detected):
         """
@@ -102,7 +104,29 @@ class DrowsinessTracker:
         # Default State: Safe / Alert
         status_text = "Status: Safe"
         status_color = config.COLOR_GREEN
-
+        # ==========================================
+        #  DYNAMIC AUTO-CALIBRATION
+        # ==========================================
+        if self.is_calibrating:
+            if ear is not None and mar is not None:
+                self.ear_sum += ear
+                self.mar_sum += mar
+                self.calib_frames_done += 1
+                
+                # Once we collect 100 frames, calculate the averages and unlock the system!
+                if self.calib_frames_done >= self.calib_frames_needed:
+                    self.baseline_ear = self.ear_sum / self.calib_frames_needed
+                    self.baseline_mar = self.mar_sum / self.calib_frames_needed
+                    self.is_calibrating = False
+                    self.log_event("Session_Started", 0)
+                    print(f"Calibration Complete! Baseline EAR: {self.baseline_ear:.2f} | MAR: {self.baseline_mar:.2f}")
+                    
+            return f"CALIBRATING ({self.calib_frames_done}/{self.calib_frames_needed})", (0, 255, 255)
+        # PHASE 2: EVENT DETECTION & LOGGING
+        # Calculate dynamic thresholds based on THIS specific driver
+        drowsy_thresh = self.baseline_ear * 0.75  # Alert if eyes close 25% past normal
+        yawn_thresh = self.baseline_mar * 1.5     # Alert if mouth opens 50% wider than normal
+        phone_consec_frames = getattr(config, 'PHONE_CONSEC_FRAMES', 5)
         # -------------------------------------------------------------
         # 1. EYE ASPECT RATIO (DROWSINESS) LOGIC
         # -------------------------------------------------------------
@@ -129,7 +153,7 @@ class DrowsinessTracker:
         # 3. HAND-TO-EAR PROXIMITY (PHONE DISTRACTION) LOGIC
         # -------------------------------------------------------------
         # Get threshold from config or default to 20 frames
-        phone_consec_frames = getattr(config, 'PHONE_CONSEC_FRAMES')
+        phone_consec_frames = getattr(config, 'PHONE_CONSEC_FRAMES', 5)
         # Trigger if the phone seen
         if phone_detected and hand_distance < 80:
             self.phone_counter += 1
