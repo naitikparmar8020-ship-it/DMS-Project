@@ -21,8 +21,11 @@ class DrowsinessTracker:
         # 1. Temporal Frame Counters (persist state across video frames)
         self.eye_counter = 0
         self.mouth_counter = 0
-        self.phone_counter = 0
+        # self.phone_counter = 0
         self.yawn_counter = 0
+        self.phone_history=[]
+        self.history_length=30 #it look at last 10 frames
+        self.alert_threshold = 15 #sound play if phone detected in those 10 frames 
 
         # 2. State Flags
         self.drowsy_alert = False
@@ -157,16 +160,17 @@ class DrowsinessTracker:
             self.yawn_alert = False
             self.log_lock_yawn =False
         # phone distraction
-        if phone_detected and hand_distance < 250:
-            self.phone_counter += 1
-            print(self.phone_counter)
-            if self.phone_counter >= phone_consec_frames:
-                self.phone_alert = True
+        current_detection=(phone_detected and hand_distance < 250)
+        self.phone_history.append(current_detection)
+        if len(self.phone_history) > self.history_length:
+            self.phone_history.pop(0)
+        if sum(self.phone_history)>=self.alert_threshold:
+                self.phone_alert=True
                 if not self.log_lock_phone:
                     self.log_event("Phone Distraction",hand_distance)
                     self.log_lock_phone=True
         else:
-            self.phone_counter = 0
+            # self.phone_counter = 0
             self.phone_alert= False
             self.log_lock_phone = False
         #  priortiy status banner
