@@ -2,6 +2,10 @@ import cv2
 import numpy as np
 import pygame
 import config
+import csv
+import os
+from datetime import datetime
+
 
 
 class DrowsinessTracker:
@@ -24,10 +28,33 @@ class DrowsinessTracker:
         self.yawn_alert = False
         self.phone_alert = False
 
+        # dynamic calibration variables
+        self.is_calibrating = True
+        self.calib_frame_needed = 100 # captures roughly 3-5 seconds of video
+        self.calib_frame_done = 0
+        self.ear_sum = 0.0
+        self.mar_sum = 0.0
+        self.baseline_mar = 0.25 # fallback defaults
+        self.baseline_mar = 0.60
+
+        # CSV SESSION LOGGING VARIABLES
+        self.log_file = "driver_log.csv"
+        # if the file does not exist, create it and write the header
+        if not os.path.exists(self.log_file, mode = 'W', newline=")as f:
+            writer = csv.writer(f)
+        writer.writerow(["Timestamp", "Event_Type", "Value"])
+
+        # "LOCKS" to prevent spamming the CSV with 30 lines per second
+        self.log_lock_drowsy = False
+        self.log_lock_yawn = False
+        self.log_lock_phone = False
+         
+
+
         # 3. Audio Alarm Initialization
         pygame.mixer.init()
         try:
-            self.alarm_sound = pygame.mixer.Sound(config.ALARM_PATH)
+            self.alarm_sound = pygame.mixer.Sound(config.ALARM_PATH
             self.warning_sound = pygame.mixer.Sound(config.PHONE_PATH)
         except Exception as e:
             print(f"[ERROR] Could not load alarm sound : {e}")
