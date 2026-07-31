@@ -28,14 +28,14 @@ class FaceMeshDetector:
         self.HAND_WRTIST_IDX =0
 
         # YOLO Nano model download
-        self.yolo_model = YOLO ("yolo8n.pt")
+        self.yolo_model = YOLO ("yolov8n.pt")
         self.PHONE_CLASS_ID=67
 
     def process_frame(self, frame):
         h, w, _ = frame.shape
         # yolo detection
         phone_detected = False
-        phon_box = None
+        phone_box = None
 
         yolo_results = self.yolo_model(frame , stream = True,verbose=False) #verbose+false prevent out terminal from spamming with text every frame
         for result in yolo_results:
