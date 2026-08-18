@@ -30,7 +30,6 @@ class DrowsinessTracker:
         self.prev_mar = 0.0
         
         # Load the trained Machine Learning brain
-        # Load the trained Machine Learning brain (with crash protection!)
         try:
             self.svm_model = joblib.load("driver_model.pkl")
         except FileNotFoundError:
@@ -124,13 +123,13 @@ class DrowsinessTracker:
         # PHASE 2: EVENT DETECTION & LOGGING
         # ==========================================
         
-        # 1. SVM PREDICTIONS (Replaces manual threshold math for Eyes and Head)
+        # 1. SVM PREDICTIONS 
         if self.svm_model is not None and ear is not None and mar is not None and pitch is not None and yaw is not None:            
             # Package live data and ask SVM for a prediction
             live_features = [[ear, mar, pitch, yaw]]
             prediction = self.svm_model.predict(live_features)[0]
             
-            # --- DROWSINESS (SVM Label 1) ---
+            # --- DROWSINESS
             if prediction == 1:
                 self.drowsy_counter += 1
                 if self.drowsy_counter >= getattr(config, 'DROWSINESS_CONSEC_FRAMES', 6):
@@ -143,7 +142,7 @@ class DrowsinessTracker:
                 self.drowsy_alert = False
                 self.log_lock_drowsy = False
                 
-            # --- LOOKING DOWN / DISTRACTED (SVM Label 2) ---
+            # --- LOOKING DOWN
             if prediction == 2:
                 self.looking_down_counter += 1
                 if self.looking_down_counter >= getattr(config, 'LOOKDOWN_CONSEC_FRAMES', 6):
@@ -156,7 +155,7 @@ class DrowsinessTracker:
                 self.looking_down_alert = False
                 self.log_lock_lookingDown = False
 
-        # --- YAWNING (Kept manual threshold since SVM predicts 0, 1, 2) ---
+        # --- YAWNING
         yawn_thres = self.baseline_mar * 1.2
         if mar is not None and mar > yawn_thres:
             self.yawn_counter += 1
@@ -170,7 +169,7 @@ class DrowsinessTracker:
             self.yawn_alert = False
             self.log_lock_yawn = False
 
-        # --- PHONE DISTRACTION (Sliding Window Strategy) ---
+        # --- PHONE DISTRACTION
         if mar is not None:
             lips_movement = abs(mar - self.prev_mar) 
             self.prev_mar = mar  
