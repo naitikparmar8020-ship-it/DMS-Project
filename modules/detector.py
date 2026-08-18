@@ -140,9 +140,9 @@ class FaceMeshDetector:
         dist_matrix = np.zeros((4, 1), dtype=np.float64)
         
         # 3. Solve the angles using OpenCV
-        success, rot_vec, trans_vec = cv2.solvePnP(face_3d_model, face_2d, camera_matrix, dist_matrix)
-        rmat, jac = cv2.Rodrigues(rot_vec)
-        angles, mtxR, mtxQ, Qx, Qy, Qz = cv2.RQDecomp3x3(rmat)
+        _, rot_vec, _ = cv2.solvePnP(face_3d_model, face_2d, camera_matrix, dist_matrix)
+        rmat, _ = cv2.Rodrigues(rot_vec)
+        angles, _, _, Qx, Qy, Qz = cv2.RQDecomp3x3(rmat)
 
         pitch = angles[0] * 360
         yaw = angles[1] * 360

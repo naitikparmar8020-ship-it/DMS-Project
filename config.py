@@ -6,10 +6,10 @@ MAR_THRESHOLD = 0.60      # Above 0.65 = Mouth open wide (yawn)
 HAND_EAR_PROXIMITY_THRESHOLD = 250 # Increased for high-resolution distance
 
 # Consecutive Frame Requirements (Tuned for low FPS)
-DROWSINESS_CONSEC_FRAMES = 6  # ~1.5 seconds at current FPS
+DROWSINESS_CONSEC_FRAMES = 10  # ~1.5 seconds at current FPS
 YAWN_CONSEC_FRAMES = 20      # ~1.5 seconds at current FPS
 PHONE_CONSEC_FRAMES = 10       # ~1.5 seconds at current FPS
-LOOKDOWN_CONSEC_FRAMES = 6
+LOOKDOWN_CONSEC_FRAMES = 10
 
 # File Paths
 ALARM_PATH = "assets/alarm.wav"

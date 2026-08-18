@@ -10,7 +10,7 @@ def test_run():
     # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     
-    # 2. Initialize both the detector (your math) and the tracker (her UI/logic)
+    # 2. Initialize both the detector and the tracker 
     detector = FaceMeshDetector()
     tracker = DrowsinessTracker()
     
@@ -52,9 +52,27 @@ def test_run():
         # Show the final painted video feed 
         cv2.imshow("Test Feed", frame)
 
+        key= cv2.waitKey(1) & 0xFF
+
         # Press 'q' to quit
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if key == ord('q'):
             break
+        # Press 0 to log "Awake"
+        elif key==ord('0'):
+            with open("train_data_driver.csv", 'a') as f:
+                f.write(f"{avg_ear} , {mar} , {pitch} , {yaw} ,0\n")
+                print("logged: Awake (0)")
+        # Press 1 to log Drowsy data
+        elif key == ord("1"):
+            with open("train_data_driver.csv" , 'a') as f:
+                f.write(f"{avg_ear} , {mar} , {pitch} , {yaw} ,1\n")
+                print("logged: Drowsy (1)")
+        # Press 2 to log distracted
+        elif key == ord("2"):
+            with open("train_data_driver.csv" , 'a') as f:
+                f.write(f"{avg_ear} , {mar} , {pitch} , {yaw} ,2\n")
+                print("logged: Distracted (2)")
+                
 
     cap.release()
     cv2.destroyAllWindows()
